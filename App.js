@@ -14,13 +14,15 @@ import {
   View,
   Button,
   FlatList,
-  Keyboard,
   Slider,
+  Keyboard,
   TextInput,
   NativeModules
 } from 'react-native';
 import NfcManager, {Ndef} from 'react-native-nfc-manager';
 import Tts from 'react-native-tts';
+import AsyncStorage from '@react-native-community/async-storage';
+import { String } from 'core-js';
 
 const instructions = Platform.select({
   ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
@@ -32,7 +34,7 @@ const instructions = Platform.select({
 type Props = {};
 export default class App extends Component<Props> 
 {
-  //#region TTS
+  
   state = {
     voices: [],
     ttsStatus: "initiliazing",
@@ -42,8 +44,10 @@ export default class App extends Component<Props>
     text: "Esto es un texto de ejemplo. Lo logré"
   };
 
-  constructor(props) {
+  constructor(props) 
+  {
     super(props);
+   
     Tts.addEventListener("tts-start", event =>
       this.setState({ ttsStatus: "started" })
     );
@@ -53,11 +57,17 @@ export default class App extends Component<Props>
     Tts.addEventListener("tts-cancel", event =>
       this.setState({ ttsStatus: "cancelled" })
     );
-    Tts.setDefaultRate(this.state.speechRate);
-    Tts.setDefaultPitch(this.state.speechPitch);
-    Tts.getInitStatus().then(this.initTts);
+    //Tts.setDefaultRate(this.state.speechRate);
+    //Tts.setDefaultPitch(this.state.speechPitch);
+    Tts.getInitStatus().then(this.initTts).then(this.getData).then(this._initConfig);
   }
 
+  componentDidMount()
+  {
+    //this.getData().then(this._initConfig);
+  }
+
+  //#region TTS
   initTts = async () => {
     const voices = await Tts.voices();
     const availableVoices = voices
@@ -67,7 +77,7 @@ export default class App extends Component<Props>
       });
 
     const voicesLanguageDevice = this._getVoicesCurrentLanguageDevice(availableVoices);
-    this.setState({ text: voicesLanguageDevice[0]});
+
     let selectedVoice = null;
     if (voicesLanguageDevice && voicesLanguageDevice.length > 0) {
       selectedVoice = voicesLanguageDevice[0].id;
@@ -86,7 +96,7 @@ export default class App extends Component<Props>
     } else {
       this.setState({ ttsStatus: "initialized" });
     }
-
+    console.log("Finish initTts");
   };
 
   _getVoicesCurrentLanguageDevice(currVoices)
@@ -123,6 +133,8 @@ export default class App extends Component<Props>
   setSpeechRate = async rate => {
     await Tts.setDefaultRate(rate);
     this.setState({ speechRate: rate });
+
+    this.storeData();
   };
 
   setSpeechPitch = async rate => {
@@ -153,7 +165,73 @@ export default class App extends Component<Props>
   };
   //#endregion
 
-  render() {
+  //#region Storage_Data
+  storeData = async () => {
+    try {
+      await AsyncStorage.setItem('@AUDIO_Speed', JSON.stringify(this.state.speechRate))
+      await AsyncStorage.setItem('@AUDIO_Pitch', JSON.stringify(this.state.speechPitch))
+      await AsyncStorage.setItem('@AUDIO_Voice', this.state.selectedVoice)
+    } catch (e) {
+      // saving error
+    }
+  }
+
+  getData = async () => 
+  {
+    try {
+      const speedValue = await AsyncStorage.getItem('@AUDIO_Speed')
+      const pitchValue = await AsyncStorage.getItem('@AUDIO_Pitch')
+      const voiceValue = await AsyncStorage.getItem('@AUDIO_Voice')
+
+      console.log("Get Single Data: " + voiceValue);
+      if(speedValue !== null) 
+      {
+        this.setState({ speechRate: parseFloat(speedValue)});       
+      }
+      if(pitchValue !== null) 
+      {
+        this.setState({ speechPitch: parseFloat(pitchValue)});
+      }
+      if(voiceValue !== null) 
+      {
+        // Verificar si existe la voz guardada debido a que el usuario puede cambiar de idioma.
+        let isVoiceExist = this.state.voices.filter(v => v.id == voiceValue).map(v => {
+          return { id: v.id, name: v.name, language: v.language };
+        })
+
+        if(isVoiceExist.length > 0) 
+        {
+          this.setState({ selectedVoice: voiceValue});
+        }
+      }
+    } catch(e) {
+      // error reading value
+    }
+  }
+
+  // removeValue = async () => {
+  //   try {
+  //     await AsyncStorage.removeItem('@MyApp_key')
+  //   } catch(e) {
+  //     // remove error
+  //   }
+  
+  //   console.log('Done.')
+  // }
+
+  //#endregion
+
+  _initConfig = async () =>
+  {
+    console.log("Init Config");
+    Tts.setDefaultVoice(this.state.selectedVoice);
+    Tts.setDefaultPitch(this.state.speechPitch);
+    Tts.setDefaultRate(this.state.speechRate);
+  }
+
+  //#region Render
+  render() 
+  {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>{`React Native TTS Example`}</Text>
@@ -211,6 +289,7 @@ export default class App extends Component<Props>
       </View>
     );
   }
+  //#endregion
 } 
 
 const styles = StyleSheet.create({
