@@ -296,7 +296,7 @@ export default class App extends Component<Props>
       NfcManager.requestNdefWrite(bytes)
           .then(() => console.log('write completed'))
           .catch(err => console.warn(err))
-          .then(() => this.setState({NFC_isWriting: false}).then(this._stopDetection));
+          .then(() => this.setState({NFC_isWriting: false}));
   }
 
   _cancelNdefWrite = () => {
@@ -543,7 +543,6 @@ export default class App extends Component<Props>
 
         <Button title={`start nfc`} onPress={this._startDetection} />
         <Button title={`Read text`} onPress={this.readText} />
-        <Button title={`Stop text`} onPress={this.stopText} />
 
         <Text style={styles.label}>{`Status: ${this.state.ttsStatus ||
           ""}`}</Text>
