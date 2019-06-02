@@ -36,11 +36,11 @@ const RtdType = {
   TEXT: 1,
 };
 
-function buildUrlPayload(valueToWrite) {
-  return Ndef.encodeMessage([
-      Ndef.uriRecord(valueToWrite),
-  ]);
-}
+// function buildUrlPayload(valueToWrite) {
+//   return Ndef.encodeMessage([
+//       Ndef.uriRecord(valueToWrite),
+//   ]);
+// }
 
 function buildTextPayload(valueToWrite) {
   return Ndef.encodeMessage([
@@ -62,8 +62,8 @@ export default class App extends Component<Props>
     NFC_supported: true,
     NFC_enabled: false,
     NFC_isWriting: false,
-    NFC_urlToWrite: 'https://www.google.com',
-    NFC_rtdType: RtdType.URL,
+    NFC_urlToWrite: 'Proyecto NFC Renca',
+    NFC_rtdType: RtdType.TEXT,
     NFC_parsedText: null,
     NFC_tag: {},
   };
@@ -80,7 +80,6 @@ export default class App extends Component<Props>
     );
     Tts.addEventListener("tts-cancel", event =>
       this.setState({ ttsStatus: "cancelled: " + JSON.stringify(event)})
-      //utteranceid 10749950336
     );
     //Tts.setDefaultRate(this.state.speechRate);
     //Tts.setDefaultPitch(this.state.speechPitch);
@@ -278,23 +277,26 @@ export default class App extends Component<Props>
 
   _requestNdefWrite = () => {
       let {NFC_isWriting, NFC_urlToWrite, NFC_rtdType} = this.state;
-      if (NFC_isWriting) {
+
+      if (NFC_isWriting) 
+      {
           return;
       }
 
+      this._startDetection();
+
       let bytes;
 
-      if (NFC_rtdType === RtdType.URL) {
-          bytes = buildUrlPayload(urlToWrite);
-      } else if (NFC_rtdType === RtdType.TEXT) {
-          bytes = buildTextPayload(NFC_urlToWrite);
+      if(NFC_rtdType === RtdType.TEXT) 
+      {
+          bytes = buildTextPayload(this.state.text);
       }
 
       this.setState({NFC_isWriting: true});
       NfcManager.requestNdefWrite(bytes)
           .then(() => console.log('write completed'))
           .catch(err => console.warn(err))
-          .then(() => this.setState({NFC_isWriting: false}));
+          .then(() => this.setState({NFC_isWriting: false}).then(this._stopDetection));
   }
 
   _cancelNdefWrite = () => {
@@ -518,7 +520,11 @@ export default class App extends Component<Props>
     Tts.setDefaultPitch(this.state.speechPitch);
     Tts.setDefaultRate(this.state.speechRate);
 
-    //this._startDetection();
+    //Iniciar lectura de tag nfc
+    if(Platform.OS == 'ios')
+    {
+      this._startDetection();
+    }
   }
 
   _readNFCTagText = async() => {
@@ -556,7 +562,7 @@ export default class App extends Component<Props>
             value={this.state.speechRate}
             onSlidingComplete={this.setSpeechRate}
           />
-        </View>
+        </View>       
 
         <View style={styles.sliderContainer}>
           <Text
@@ -571,6 +577,8 @@ export default class App extends Component<Props>
           />
         </View>
 
+        <Button title={`Write text`} onPress={this._requestNdefWrite} />
+        
           <TextInput
             style={styles.textInput}
             multiline={true}
