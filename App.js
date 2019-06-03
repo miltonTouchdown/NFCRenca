@@ -1,11 +1,3 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow
- */
-
 import React, {Component} from 'react';
 import {
   Platform, 
@@ -22,25 +14,11 @@ import {
 import NfcManager, {Ndef} from 'react-native-nfc-manager';
 import Tts from 'react-native-tts';
 import AsyncStorage from '@react-native-community/async-storage';
-import { String } from 'core-js';
-
-const instructions = Platform.select({
-  ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
-  android:
-    'Double tap R on your keyboard to reload,\n' +
-    'Shake or press menu button for dev menu',
-});
 
 const RtdType = {
   URL: 0,
   TEXT: 1,
 };
-
-// function buildUrlPayload(valueToWrite) {
-//   return Ndef.encodeMessage([
-//       Ndef.uriRecord(valueToWrite),
-//   ]);
-// }
 
 function buildTextPayload(valueToWrite) {
   return Ndef.encodeMessage([
@@ -81,8 +59,7 @@ export default class App extends Component<Props>
     Tts.addEventListener("tts-cancel", event =>
       this.setState({ ttsStatus: "cancelled: " + JSON.stringify(event)})
     );
-    //Tts.setDefaultRate(this.state.speechRate);
-    //Tts.setDefaultPitch(this.state.speechPitch);
+
     Tts.getInitStatus().then(this.initTts).then(this.getData).then(this._initConfig);
   }
 
@@ -103,6 +80,10 @@ export default class App extends Component<Props>
   }
 
   //#region TTS
+
+  /**
+   * Inicializar text to speech
+   */
   initTts = async () => {
     const voices = await Tts.voices();
     const availableVoices = voices
@@ -134,6 +115,11 @@ export default class App extends Component<Props>
     console.log("Finish initTts");
   };
 
+  /**
+   * Obtener las arreglo de voces de acuerdo al lenguaje primario del 
+   * dispositivo.
+   * @param {Arreglo que contiene las voces disponibles en el dispositivo} currVoices 
+   */
   _getVoicesCurrentLanguageDevice(currVoices)
   {
     let languageDevice = this._getLanguageDevice();
@@ -143,6 +129,10 @@ export default class App extends Component<Props>
     }));
   }
 
+  /**
+   * Obtener lenguaje del dispositivo. Se obtienen
+   * las dos primeras letras.
+   */
   _getLanguageDevice()
   {
     let systemLanguage = 'es';
@@ -160,15 +150,24 @@ export default class App extends Component<Props>
     return languageCode;
   }
 
+  /**
+   * Leer texto en audio. 
+   */
   readText = async () => {
     Tts.stop();
     Tts.speak(this.state.text);
   };
 
+  /**
+   * Detener audio.
+   */
   stopText = async () => {
     Tts.stop();
   };
 
+  /**
+   * Modificar rate de la voz
+   */
   setSpeechRate = async rate => {
     await Tts.setDefaultRate(rate);
     this.setState({ speechRate: rate });
@@ -176,11 +175,19 @@ export default class App extends Component<Props>
     this.storeData();
   };
 
+  /**
+   * Modificar pitch de la voz
+   */
   setSpeechPitch = async rate => {
     await Tts.setDefaultPitch(rate);
     this.setState({ speechPitch: rate });
+
+    this.storeData();
   };
 
+  /**
+   * Modificar voz actual
+   */
   onVoicePress = async voice => {
     try {
       await Tts.setDefaultLanguage(voice.language);
@@ -190,6 +197,8 @@ export default class App extends Component<Props>
     }
     await Tts.setDefaultVoice(voice.id);
     this.setState({ selectedVoice: voice.id });
+
+    this.storeData();
   };
 
   renderVoiceItem = ({ item }) => {
@@ -205,6 +214,10 @@ export default class App extends Component<Props>
   //#endregion
 
   //#region Storage_Data
+
+  /**
+   * Guardar datos en el dispositivo
+   */
   storeData = async () => {
     try {
       await AsyncStorage.setItem('@AUDIO_Speed', JSON.stringify(this.state.speechRate))
@@ -215,6 +228,9 @@ export default class App extends Component<Props>
     }
   }
 
+  /**
+   * Obtener datos guardados en el dispositivo
+   */
   getData = async () => 
   {
     try {
@@ -248,33 +264,13 @@ export default class App extends Component<Props>
     }
   }
 
-  // removeValue = async () => {
-  //   try {
-  //     await AsyncStorage.removeItem('@MyApp_key')
-  //   } catch(e) {
-  //     // remove error
-  //   }
-  
-  //   console.log('Done.')
-  // }
-
   //#endregion
 
   //#region NFC
 
-  _requestFormat = () => {
-    let {NFC_isWriting} = this.state;
-    if (NFC_isWriting) {
-        return;
-    }
-
-    this.setState({NFC_isWriting: true});
-    NfcManager.requestNdefWrite(null, {format: true})
-        .then(() => console.log('format completed'))
-        .catch(err => console.warn(err))
-        .then(() => this.setState({NFC_isWriting: false}));
-  }
-
+  /**
+   * Iniciar escritura en tag nfc.
+   */
   _requestNdefWrite = () => {
       let {NFC_isWriting, NFC_urlToWrite, NFC_rtdType} = this.state;
 
@@ -299,6 +295,9 @@ export default class App extends Component<Props>
           .then(() => this.setState({NFC_isWriting: false}));
   }
 
+  /**
+   * Cancelar escritura tag nfc.
+   */
   _cancelNdefWrite = () => {
       this.setState({NFC_isWriting: false});
       NfcManager.cancelNdefWrite()
@@ -306,33 +305,9 @@ export default class App extends Component<Props>
           .catch(err => console.warn(err))
   }
 
-  _requestAndroidBeam = () => {
-      let {NFC_isWriting, NFC_urlToWrite, NFC_rtdType} = this.state;
-      if (NFC_isWriting) {
-          return;
-      }
-
-      let bytes;
-
-      if (NFC_rtdType === RtdType.URL) {
-          bytes = buildUrlPayload(NFC_urlToWrite);
-      } else if (NFC_rtdType === RtdType.TEXT) {
-          bytes = buildTextPayload(NFC_urlToWrite);
-      }
-
-      this.setState({NFC_isWriting: true});
-      NfcManager.setNdefPushMessage(bytes)
-          .then(() => console.log('beam request completed'))
-          .catch(err => console.warn(err))
-  }
-
-  _cancelAndroidBeam = () => {
-      this.setState({NFC_isWriting: false});
-      NfcManager.setNdefPushMessage(null)
-          .then(() => console.log('beam cancelled'))
-          .catch(err => console.warn(err))
-  }
-
+  /**
+   * Inicializar NFC en el dispositivo
+   */
   _startNfc() {
       NfcManager.start({
           onSessionClosedIOS: () => {
@@ -400,19 +375,12 @@ export default class App extends Component<Props>
       }
   }
 
+  /**
+   * Al descubrir un nuevo tag, activa la lectura por audio del texto almacenado
+   * en el tag.
+   */
   _onTagDiscovered = NFC_tag => {
       console.log('Tag Discovered', NFC_tag);
-      //this.setState({NFC_tag });
-      // let url = this._parseUri(NFC_tag);
-      // if (url) {
-      //     Linking.openURL(url)
-      //         .catch(err => {
-      //             console.warn(err);
-      //         })
-      // }
-
-      //let text = this._parseText(NFC_tag);
-      //this.setState({NFC_parsedText: text});
 
       /*
       * Se ha detectado un tag al iniciar la aplicacion
@@ -445,6 +413,9 @@ export default class App extends Component<Props>
       }  
   }
 
+  /**
+   * Iniciar detection de NFC.
+   */
   _startDetection = () => {
     
       NfcManager.registerTagEvent(
@@ -462,6 +433,9 @@ export default class App extends Component<Props>
           })
   }
 
+  /**
+   * Detener deteccion de NFC
+   */
   _stopDetection = () => {
       NfcManager.unregisterTagEvent()
           .then(result => {
@@ -476,29 +450,9 @@ export default class App extends Component<Props>
       this.setState({NFC_tag: null});
   }
 
-  _goToNfcSetting = () => {
-      if (Platform.OS === 'android') {
-          NfcManager.goToNfcSetting()
-              .then(result => {
-                  console.log('goToNfcSetting OK', result)
-              })
-              .catch(error => {
-                  console.warn('goToNfcSetting fail', error)
-              })
-      }
-  }
-
-  _parseUri = (NFC_tag) => {
-      try {
-          if (Ndef.isType(NFC_tag.ndefMessage[0], Ndef.TNF_WELL_KNOWN, Ndef.RTD_URI)) {
-              return Ndef.uri.decodePayload(NFC_tag.ndefMessage[0].payload);
-          }
-      } catch (e) {
-          console.log(e);
-      }
-      return null;
-  }
-
+  /**
+   * Obtener texto desde un tag.
+   */
   _parseText = (NFC_tag) => {
       try {
           if (Ndef.isType(NFC_tag.ndefMessage[0], Ndef.TNF_WELL_KNOWN, Ndef.RTD_TEXT)) {
