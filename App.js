@@ -1,19 +1,24 @@
-import React, {Component} from 'react';
+import React, {Component, Fragment} from 'react';
 import {
   Platform, 
-  StyleSheet, 
   Text, 
   View,
-  Button,
-  FlatList,
-  Slider,
-  Keyboard,
-  TextInput,
+  SafeAreaView,
+  Image,
+  TouchableOpacity,
+  //FlatList,
+  //Slider,
+  //Keyboard,
+  //TextInput,
   NativeModules
 } from 'react-native';
 import NfcManager, {Ndef} from 'react-native-nfc-manager';
 import Tts from 'react-native-tts';
 import AsyncStorage from '@react-native-community/async-storage';
+import { Button, Overlay, Slider } from 'react-native-elements';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import style from './scripts/style';
 
 const RtdType = {
   URL: 0,
@@ -44,6 +49,8 @@ export default class App extends Component<Props>
     NFC_rtdType: RtdType.TEXT,
     NFC_parsedText: null,
     NFC_tag: {},
+    isAfterTagRead: false,
+    isConfigVisible: false,
   };
 
   constructor(props) 
@@ -492,6 +499,181 @@ export default class App extends Component<Props>
   render() 
   {
     return (
+      <SafeAreaView forceInset={{ top: 'always' }} style={{ backgroundColor: '#F5FCFF', flex: 1}}>
+        <View style={style.container}>
+          <View style={style.header}>
+            <View style={style.row}>
+              <View style={{justifyContent: 'center', alignItems: 'flex-end', flex:1}}>
+                <Button
+                  icon={
+                    <Icon
+                      name="cog"
+                      size={30}
+                      color="black"
+                    />
+                  }
+                  type="clean"
+                  onPress={() => this.setState({ isConfigVisible: true })} 
+                />
+              </View>
+            </View>
+          </View>
+          <View style={style.content}>
+            {this.state.isAfterTagRead ? 
+            (
+              // Mostrar texto alojado en el chip nfc. Mostrar botones.
+              <View style={style.column}>
+                <View style={{justifyContent: 'center',  alignItems: 'center', flex:1, backgroundColor: '#F5FCFF',}}>
+                  <Text style={[style.instructions, {margin:30}]}>{this.state.text}</Text>
+                </View>
+                <View style={{justifyContent: 'center', alignItems: 'flex-end', flex:.1,}}>
+                  <Button
+                    icon={
+                      <Icon
+                        name="volume-up"
+                        size={30}
+                        color="black"
+                      />
+                    }
+                    type="clean"
+                    //onPress={} 
+                  />
+                </View>
+              </View>         
+            ) : 
+            (
+              // Lectura nfc
+              Platform.select({
+                ios: null,
+                android: 
+                  <View style={style.contentImage}>
+                      <Image
+                      style={{width: 400 , height: 400}}
+                      source={require('./resources/images/circle.png')}
+                      />
+                      <View style={{position: 'absolute', height: 200, width: 200, justifyContent: 'center', alignItems: 'center'}}>
+                        <Text style={{fontSize: 20, textAlign: 'center',}}>
+                          Acerca el celular al tag NFC
+                        </Text>
+                      </View>
+                </View>
+              })               
+            )}            
+          </View>
+          
+          <View style={style.footer}>
+            {
+              Platform.select({
+                ios: 
+                // Boton leer tag (IOS). 
+                <TouchableOpacity
+                style={[style.button, style.bottom]}
+                onPress={this.onPress}
+                >
+                  <Image
+                  style={{width: 50 , height: 70}}
+                  source={require('./resources/images/circle.png')}
+                  />
+                  <Text style={style.instructions}> Leer Tag</Text>
+                </TouchableOpacity>
+                ,
+                android:
+                  this.state.isAfterTagRead ?
+                  (
+                  //  Mostrar mensaje de lectura (android)
+                  <Button
+                  title='Acerca el celular para leer el tag NFC'
+                  type='outline'
+                  containerStyle={[{backgroundColor:'#F5FCFF',}, style.bottom]}
+                  disabled={true}
+                  />
+                  )
+                  :
+                  (null) 
+                ,
+              })
+            }            
+          </View>
+
+          <Overlay
+            isVisible={this.state.isConfigVisible}
+            onBackdropPress={() => this.setState({ isConfigVisible: false })}
+            height='auto'
+            width='auto'
+            overlayStyle={style.containerOverlay}
+          >
+            <Fragment>
+              <View style={{flexDirection: 'column', justifyContent: "center", alignItems: 'center',}}>
+                <Text style={style.title}>Configuraciones de Audio</Text>
+                  
+                  <Slider
+                    style={style.slider}
+                    trackStyle={style.trackSlider}
+                    thumbStyle={style.thumbSlider}
+                    minimumTrackTintColor='#30a935'
+                  />
+
+                  <Text
+                    style={style.labelSlider}> 
+                    {`Tono`}
+                  </Text>
+
+                  <Slider
+                    style={style.slider}
+                    trackStyle={style.trackSlider}
+                    thumbStyle={style.thumbSlider}
+                    minimumTrackTintColor='#30a935'
+                  />
+
+                  <Text
+                    style={style.labelSlider}>
+                    {`Velocidad`}
+                  </Text>
+              </View>
+              <View style={{height: 30, backgroundColor: 'white'}}></View>
+          <View style={{flexDirection: 'row', justifyContent: 'space-between',}}>
+                    <Button
+                      ViewComponent={LinearGradient}
+                      linearGradientProps={{
+                        colors: ['#f01616', '#f01616'],
+                        start: { x: 0, y: 0 },
+                        end: { x: 1, y: 1 },
+                      }}
+                      icon={
+                        <Icon
+                          name="times-circle"
+                          size={22}
+                          color="white"
+                        />
+                      }
+                      title="Cancelar"
+                      onPress={() => this.setState({ isAfterTagRead: false })} 
+                    />
+
+                    <Button
+                      ViewComponent={LinearGradient} 
+                      linearGradientProps={{
+                        colors: ['#1aa338', '#1aa338'],
+                        start: { x: 0, y: 0 },
+                        end: { x: 1, y: 1 },
+                      }}
+                      icon={
+                        <Icon
+                          name="check-circle"
+                          size={22}
+                          color="white"
+                        />
+                      }
+                      title="Aceptar"
+                      color="black"
+                      onPress={() => this.setState({ isAfterTagRead: true })} 
+                    />
+              </View>
+            </Fragment>
+          </Overlay>
+        </View>
+      </SafeAreaView>
+      /*
       <View style={styles.container}>
         <Text style={styles.title}>{`NFC Renca`}</Text>
 
@@ -549,43 +731,8 @@ export default class App extends Component<Props>
         />
         </View>
       </View>
+      */
     );
   }
   //#endregion
 } 
-
-const styles = StyleSheet.create({
-  container: {
-    marginTop: 26,
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F5FCFF"
-  },
-  title: {
-    fontSize: 20,
-    textAlign: "center",
-    margin: 10
-  },
-  label: {
-    textAlign: "center"
-  },
-  sliderContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center"
-  },
-  sliderLabel: {
-    textAlign: "center",
-    marginRight: 20
-  },
-  slider: {
-    width: 150
-  },
-  textInput: {
-    borderColor: "gray",
-    borderWidth: 1,
-    flex: 1,
-    width: "100%"
-  }
-});
