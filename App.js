@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   Image,
   TouchableOpacity,
+  Alert,
   //FlatList,
   //Slider,
   //Keyboard,
@@ -51,6 +52,8 @@ export default class App extends Component<Props>
     NFC_tag: {},
     isAfterTagRead: false,
     isConfigVisible: false,
+    countTap: 2,
+    currCountTap: 0,
   };
 
   constructor(props) 
@@ -495,6 +498,24 @@ export default class App extends Component<Props>
 
   //#endregion
 
+  //#region UI_Behaviour
+  OpenWindowConfig = () =>
+  {
+    if(this.state.currCountTap === 0)
+    {
+      setInterval(()=> this.setState({ currCountTap: 0 }), 1000);
+    }
+  
+    this.state.currCountTap++;
+    
+    if(this.state.currCountTap === this.state.countTap)
+    {
+      this.setState({ isConfigVisible: true });
+      this.setState({ currCountTap: 0 });
+    }
+  }
+  //#endregion
+
   //#region Render
   render() 
   {
@@ -513,7 +534,7 @@ export default class App extends Component<Props>
                     />
                   }
                   type="clean"
-                  onPress={() => this.setState({ isConfigVisible: true })} 
+                  onPress={ this.OpenWindowConfig} 
                 />
               </View>
             </View>
@@ -536,7 +557,7 @@ export default class App extends Component<Props>
                       />
                     }
                     type="clean"
-                    //onPress={} 
+                    onPress={()=> Alert.alert('You tapped the button!')} 
                   />
                 </View>
               </View>         
@@ -647,7 +668,7 @@ export default class App extends Component<Props>
                         />
                       }
                       title="Cancelar"
-                      onPress={() => this.setState({ isAfterTagRead: false })} 
+                      onPress={() => this.setState({ isAfterTagRead: false})} 
                     />
 
                     <Button
