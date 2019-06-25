@@ -58,6 +58,9 @@ export default class App extends Component<Props>
     currCountTap: 0,
     Picker_currValue: null,
     timeoutID: null,
+    currValuePitchSlider: null,
+    currValueRateSlider: null,
+    currVoicePicker: null,
   };
 
   constructor(props) 
@@ -186,7 +189,7 @@ export default class App extends Component<Props>
     await Tts.setDefaultRate(rate);
     this.setState({ speechRate: rate });
 
-    this.storeData();
+    //this.storeData();
   };
 
   /**
@@ -196,13 +199,13 @@ export default class App extends Component<Props>
     await Tts.setDefaultPitch(rate);
     this.setState({ speechPitch: rate });
 
-    this.storeData();
+    //this.storeData();
   };
 
   /**
    * Modificar voz actual
    */
-  onVoicePress = async voice => {
+  setVoice = async voice => {
     try {
       await Tts.setDefaultLanguage(voice.language);
     } catch (err) {
@@ -212,7 +215,7 @@ export default class App extends Component<Props>
     await Tts.setDefaultVoice(voice.id);
     this.setState({ selectedVoice: voice.id });
 
-    this.storeData();
+    //this.storeData();
   };
 
   // renderVoiceItem = ({ item }) => {
@@ -513,17 +516,22 @@ export default class App extends Component<Props>
   {
     if(this.state.currCountTap == 0)
     {
-      timeoutID = setTimeout(()=> this.setState({currCountTap: 0}), 500);
+      this.state.timeoutID = setTimeout(()=> this.setState({currCountTap: 0}), 500);
     }
   
     this.state.currCountTap++;
-    console.log("taps: " + this.state.currCountTap);
+
     if(this.state.currCountTap === this.state.countTap)
     {
-      clearTimeout(timeoutID);
-      timeoutID = null;
-      this.setState({ isConfigVisible: true });
+      // Abrir configuraciones
+      clearTimeout(this.state.timeoutID);
+
+      this.setState({ isConfigVisible: true, timeoutID: null });
       this.setState({ currCountTap: 0 });
+
+      this.setState({currValuePitchSlider: this.state.speechPitch});
+      this.setState({currValueRateSlider: this.state.speechRate});
+      this.setState({Picker_currValue: this.state.selectedVoice});
     }
   }
 
@@ -532,20 +540,23 @@ export default class App extends Component<Props>
     // close window
     this.setState({ isConfigVisible: false, currCountTap: 0  });
 
-    // value slider pitch
+    // Guardar valores
+    if(isSave)
+    {
+      this.setSpeechPitch(this.state.currValuePitchSlider);
+      this.setSpeechRate(this.state.currValueRateSlider);
+      this.setVoice(this.state.currVoicePicker);
 
-    // value slider velocity
-
-    // value voice
-
-    // save values
+      this.storeData();
+    }
   }
 
   pickerChange(index){
     this.state.voices.map( (v,i)=>{
       if( index === i ){
         this.setState({
-        Picker_currValue: this.state.voices[index].id
+          Picker_currValue: this.state.voices[index].id,
+          currVoicePicker: this.state.voices[index]
         })
       }
     })
@@ -682,6 +693,10 @@ export default class App extends Component<Props>
                     trackStyle={style.trackSlider}
                     thumbStyle={style.thumbSlider}
                     minimumTrackTintColor='#30a935'
+                    minimumValue={0.5}
+                    maximumValue={2}
+                    value={this.state.currValuePitchSlider}
+                    onValueChange={value => this.setState({currValuePitchSlider: value })}
                   />
 
                   <Text
@@ -694,6 +709,10 @@ export default class App extends Component<Props>
                       trackStyle={style.trackSlider}
                       thumbStyle={style.thumbSlider}
                       minimumTrackTintColor='#30a935'
+                      value={this.state.currValueRateSlider}
+                      onValueChange={value => this.setState({currValueRateSlider: value })}
+                      minimumValue={0.01}
+                      maximumValue={0.99}
                     />
 
                     <Text
