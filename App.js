@@ -57,6 +57,7 @@ export default class App extends Component<Props>
     countTap: 2,
     currCountTap: 0,
     Picker_currValue: null,
+    timeoutID: null,
   };
 
   constructor(props) 
@@ -510,18 +511,34 @@ export default class App extends Component<Props>
   //#region UI_Behaviour
   OpenWindowConfig = () =>
   {
-    if(this.state.currCountTap === 0)
+    if(this.state.currCountTap == 0)
     {
-      setInterval(()=> this.setState({ currCountTap: 0 }), 1000);
+      timeoutID = setTimeout(()=> this.setState({currCountTap: 0}), 500);
     }
   
     this.state.currCountTap++;
-    
+    console.log("taps: " + this.state.currCountTap);
     if(this.state.currCountTap === this.state.countTap)
     {
+      clearTimeout(timeoutID);
+      timeoutID = null;
       this.setState({ isConfigVisible: true });
       this.setState({ currCountTap: 0 });
     }
+  }
+
+  OnCloseWindowConfig = (isSave) =>
+  {
+    // close window
+    this.setState({ isConfigVisible: false, currCountTap: 0  });
+
+    // value slider pitch
+
+    // value slider velocity
+
+    // value voice
+
+    // save values
   }
 
   pickerChange(index){
@@ -716,7 +733,8 @@ export default class App extends Component<Props>
                         />
                       }
                       title="Cancelar"
-                      onPress={() => this.setState({ isAfterTagRead: false})} 
+                      onPress={() => this.OnCloseWindowConfig(false)} 
+                      //onPress={() => this.setState({ isAfterTagRead: false})} 
                     />
 
                     <Button
@@ -735,7 +753,8 @@ export default class App extends Component<Props>
                       }
                       title="Aceptar"
                       color="black"
-                      onPress={() => this.setState({ isAfterTagRead: true })} 
+                      onPress={() => this.OnCloseWindowConfig(true)} 
+                      //onPress={() => this.setState({ isAfterTagRead: true })} 
                     />
               </View>
             </Fragment>
