@@ -12,6 +12,7 @@ import {
   //Slider,
   //Keyboard,
   //TextInput,
+  Dimensions,
   NativeModules
 } from 'react-native';
 import NfcManager, {Ndef} from 'react-native-nfc-manager';
@@ -44,7 +45,7 @@ export default class App extends Component<Props>
     selectedVoice: null,
     speechRate: 0.5,
     speechPitch: 1,
-    text: "Esto es un texto de ejemplo. Lo logré",
+    text: "Renca te guía",
     NFC_supported: true,
     NFC_enabled: false,
     NFC_isWriting: false,
@@ -188,8 +189,6 @@ export default class App extends Component<Props>
   setSpeechRate = async rate => {
     await Tts.setDefaultRate(rate);
     this.setState({ speechRate: rate });
-
-    //this.storeData();
   };
 
   /**
@@ -198,8 +197,6 @@ export default class App extends Component<Props>
   setSpeechPitch = async rate => {
     await Tts.setDefaultPitch(rate);
     this.setState({ speechPitch: rate });
-
-    //this.storeData();
   };
 
   /**
@@ -214,26 +211,7 @@ export default class App extends Component<Props>
     }
     await Tts.setDefaultVoice(voice.id);
     this.setState({ selectedVoice: voice.id });
-
-    //this.storeData();
   };
-
-  // renderVoiceItem = ({ item }) => {
-  //   return (
-  //     <Button
-  //       style={style.instructions}
-  //       title={`${item.language} - ${item.name || item.id}`}
-  //       //color={this.state.selectedVoice === item.id ? undefined : "#969696"}
-  //       ViewComponent={LinearGradient}
-  //       linearGradientProps={{
-  //         colors: [this.state.selectedVoice === item.id ? 'white' : "#969696", this.state.selectedVoice === item.id ? 'white' : "#969696"],
-  //         start: { x: 0, y: 0 },
-  //         end: { x: 1, y: 1 },
-  //       }}
-  //       onPress={() => this.onVoicePress(item)}
-  //     />
-  //   );
-  // };
   //#endregion
 
   //#region Storage_Data
@@ -246,8 +224,12 @@ export default class App extends Component<Props>
       await AsyncStorage.setItem('@AUDIO_Speed', JSON.stringify(this.state.speechRate))
       await AsyncStorage.setItem('@AUDIO_Pitch', JSON.stringify(this.state.speechPitch))
       await AsyncStorage.setItem('@AUDIO_Voice', this.state.selectedVoice)
+
+      console.log("store speed: " + this.state.speechRate);
+      console.log("store pitch: " + this.state.speechPitch);
     } catch (e) {
       // saving error
+      console.log("saving error: " + e)
     }
   }
 
@@ -261,7 +243,10 @@ export default class App extends Component<Props>
       const pitchValue = await AsyncStorage.getItem('@AUDIO_Pitch')
       const voiceValue = await AsyncStorage.getItem('@AUDIO_Voice')
 
-      console.log("Get Single Data: " + voiceValue);
+      console.log("Get speed: " + speedValue);
+      console.log("Get pitch: " + pitchValue);
+      console.log("Get voice: " + voiceValue.id);
+
       if(speedValue !== null) 
       {
         this.setState({ speechRate: parseFloat(speedValue)});       
@@ -284,6 +269,7 @@ export default class App extends Component<Props>
       }
     } catch(e) {
       // error reading value
+      console.log("reading error: " + e)
     }
   }
 
@@ -332,6 +318,7 @@ export default class App extends Component<Props>
    * Inicializar NFC en el dispositivo
    */
   _startNfc() {
+    console.log("start nfc");
       NfcManager.start({
           onSessionClosedIOS: () => {
               console.log('ios session closed');
@@ -353,6 +340,7 @@ export default class App extends Component<Props>
                   {
                       /*
                       * Se ha detectado un tag al iniciar la aplicacion
+                      * Aca ocurre la lectura en Android
                       */
                       this.setState({ NFC_tag });
                       let text = this._parseText(NFC_tag);
@@ -361,11 +349,12 @@ export default class App extends Component<Props>
                       //Iniciar lectura en audio del texto 
                       this.setState({text: this._parseText(NFC_tag)});
                       //Iniciar lectura en audio del texto      
-                      this._readNFCTagText();                    
+                      //this._readNFCTagText();    
+                      Tts.getInitStatus().then(this.initTts).then(this.getData).then(this._initConfig).then(this._readNFCTagText);                
                   }
               })
               .catch(err => {
-                  console.log(err);
+                  console.log('fail start: ' + err);
               })
           NfcManager.isEnabled()
               .then(NFC_enabled => {
@@ -439,8 +428,10 @@ export default class App extends Component<Props>
   /**
    * Iniciar detection de NFC.
    */
-  _startDetection = () => {
+  _startDetection = () => 
+  {
     
+    console.log('star detection');
       NfcManager.registerTagEvent(
         this._onTagDiscovered,
         'Mantén tu dispositivo sobre el tag NFC',
@@ -502,9 +493,14 @@ export default class App extends Component<Props>
     {
       this._startDetection();
     }
+
+    // TODO Mostrar alerta si el dispositivo no soporta nfc o lo tiene desactivado
   }
 
-  _readNFCTagText = async() => {
+  _readNFCTagText = async() => 
+  {
+    this.setState({isAfterTagRead: true});
+
     Tts.stop();
     Tts.speak(this.state.text); 
   };
@@ -577,10 +573,10 @@ export default class App extends Component<Props>
                     <Icon
                       name="cog"
                       size={30}
-                      color="black"
+                      color="#cccccc"
                     />
                   }
-                  type="clean"
+                  type='clear'
                   onPress={ this.OpenWindowConfig} 
                 />
               </View>
@@ -592,7 +588,7 @@ export default class App extends Component<Props>
               // Mostrar texto alojado en el chip nfc. Mostrar botones.
               <View style={style.column}>
                 <View style={{justifyContent: 'center',  alignItems: 'center', flex:1, backgroundColor: '#F5FCFF',}}>
-                  <Text style={[style.instructions, {margin:30}]}>{this.state.text}</Text>
+                  <Text style={[style.instructions, {margin:30, fontSize: Dimensions.get('window').width * 0.05}]}>{this.state.text}</Text>
                 </View>
                 <View style={{justifyContent: 'center', alignItems: 'flex-end', flex:.1,}}>
                   <Button
@@ -604,20 +600,21 @@ export default class App extends Component<Props>
                       />
                     }
                     type="clean"
-                    onPress={()=> Alert.alert(
-                      'Alert Title',
-                      'My Alert Msg',
-                      [
-                        {text: 'Ask me later', onPress: () => console.log('Ask me later pressed')},
-                        {
-                          text: 'Cancel',
-                          onPress: () => console.log('Cancel Pressed'),
-                          style: 'cancel',
-                        },
-                        {text: 'OK', onPress: () => console.log('OK Pressed')},
-                      ],
-                      {cancelable: false},
-                    )} 
+                    onPress ={this.readText}
+                    // onPress={()=> Alert.alert(
+                    //   'Alert Title',
+                    //   'My Alert Msg',
+                    //   [
+                    //     {text: 'Ask me later', onPress: () => console.log('Ask me later pressed')},
+                    //     {
+                    //       text: 'Cancel',
+                    //       onPress: () => console.log('Cancel Pressed'),
+                    //       style: 'cancel',
+                    //     },
+                    //     {text: 'OK', onPress: () => console.log('OK Pressed')},
+                    //   ],
+                    //   {cancelable: false},
+                    // )} 
                   />
                 </View>
               </View>         
@@ -649,11 +646,11 @@ export default class App extends Component<Props>
                 // Boton leer tag (IOS). 
                 <TouchableOpacity
                 style={[style.button, style.bottom]}
-                onPress={this.onPress}
+                onPress={this._startDetection}
                 >
                   <IconMaterial
                         name="speaker-phone"
-                        size={100}
+                        size={60}
                         color="black"
                   />
                   <Text style={style.instructions}> Leer Tag</Text>
@@ -693,8 +690,8 @@ export default class App extends Component<Props>
                     trackStyle={style.trackSlider}
                     thumbStyle={style.thumbSlider}
                     minimumTrackTintColor='#30a935'
-                    minimumValue={0.5}
-                    maximumValue={2}
+                    minimumValue={0.55}
+                    maximumValue={1.95}
                     value={this.state.currValuePitchSlider}
                     onValueChange={value => this.setState({currValuePitchSlider: value })}
                   />
@@ -711,8 +708,8 @@ export default class App extends Component<Props>
                       minimumTrackTintColor='#30a935'
                       value={this.state.currValueRateSlider}
                       onValueChange={value => this.setState({currValueRateSlider: value })}
-                      minimumValue={0.01}
-                      maximumValue={0.99}
+                      minimumValue={0.019}
+                      maximumValue={0.98}
                     />
 
                     <Text
