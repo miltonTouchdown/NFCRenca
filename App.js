@@ -7,7 +7,8 @@ import {
   Image,
   TouchableOpacity,
   Alert,
-  //FlatList,
+  FlatList,
+  Picker,
   //Slider,
   //Keyboard,
   //TextInput,
@@ -19,6 +20,7 @@ import AsyncStorage from '@react-native-community/async-storage';
 import { Button, Overlay, Slider } from 'react-native-elements';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import IconMaterial from 'react-native-vector-icons/MaterialIcons'
 import style from './scripts/style';
 
 const RtdType = {
@@ -54,6 +56,7 @@ export default class App extends Component<Props>
     isConfigVisible: false,
     countTap: 2,
     currCountTap: 0,
+    Picker_currValue: null,
   };
 
   constructor(props) 
@@ -211,16 +214,22 @@ export default class App extends Component<Props>
     this.storeData();
   };
 
-  renderVoiceItem = ({ item }) => {
-    return (
-      <Button
-        style={styles.instructions}
-        title={`${item.language} - ${item.name || item.id}`}
-        color={this.state.selectedVoice === item.id ? undefined : "#969696"}
-        onPress={() => this.onVoicePress(item)}
-      />
-    );
-  };
+  // renderVoiceItem = ({ item }) => {
+  //   return (
+  //     <Button
+  //       style={style.instructions}
+  //       title={`${item.language} - ${item.name || item.id}`}
+  //       //color={this.state.selectedVoice === item.id ? undefined : "#969696"}
+  //       ViewComponent={LinearGradient}
+  //       linearGradientProps={{
+  //         colors: [this.state.selectedVoice === item.id ? 'white' : "#969696", this.state.selectedVoice === item.id ? 'white' : "#969696"],
+  //         start: { x: 0, y: 0 },
+  //         end: { x: 1, y: 1 },
+  //       }}
+  //       onPress={() => this.onVoicePress(item)}
+  //     />
+  //   );
+  // };
   //#endregion
 
   //#region Storage_Data
@@ -514,6 +523,16 @@ export default class App extends Component<Props>
       this.setState({ currCountTap: 0 });
     }
   }
+
+  pickerChange(index){
+    this.state.voices.map( (v,i)=>{
+      if( index === i ){
+        this.setState({
+        Picker_currValue: this.state.voices[index].id
+        })
+      }
+    })
+   }
   //#endregion
 
   //#region Render
@@ -557,7 +576,20 @@ export default class App extends Component<Props>
                       />
                     }
                     type="clean"
-                    onPress={()=> Alert.alert('You tapped the button!')} 
+                    onPress={()=> Alert.alert(
+                      'Alert Title',
+                      'My Alert Msg',
+                      [
+                        {text: 'Ask me later', onPress: () => console.log('Ask me later pressed')},
+                        {
+                          text: 'Cancel',
+                          onPress: () => console.log('Cancel Pressed'),
+                          style: 'cancel',
+                        },
+                        {text: 'OK', onPress: () => console.log('OK Pressed')},
+                      ],
+                      {cancelable: false},
+                    )} 
                   />
                 </View>
               </View>         
@@ -591,9 +623,10 @@ export default class App extends Component<Props>
                 style={[style.button, style.bottom]}
                 onPress={this.onPress}
                 >
-                  <Image
-                  style={{width: 50 , height: 70}}
-                  source={require('./resources/images/circle.png')}
+                  <IconMaterial
+                        name="speaker-phone"
+                        size={100}
+                        color="black"
                   />
                   <Text style={style.instructions}> Leer Tag</Text>
                 </TouchableOpacity>
@@ -615,7 +648,7 @@ export default class App extends Component<Props>
               })
             }            
           </View>
-
+            
           <Overlay
             isVisible={this.state.isConfigVisible}
             onBackdropPress={() => this.setState({ isConfigVisible: false })}
@@ -638,18 +671,33 @@ export default class App extends Component<Props>
                     style={style.labelSlider}> 
                     {`Tono`}
                   </Text>
+                  <View style={{marginBottom: 15,}}>
+                    <Slider
+                      style={style.slider}
+                      trackStyle={style.trackSlider}
+                      thumbStyle={style.thumbSlider}
+                      minimumTrackTintColor='#30a935'
+                    />
 
-                  <Slider
-                    style={style.slider}
-                    trackStyle={style.trackSlider}
-                    thumbStyle={style.thumbSlider}
-                    minimumTrackTintColor='#30a935'
-                  />
-
+                    <Text
+                      style={style.labelSlider}>
+                      {`Velocidad`}
+                    </Text>
+                  </View>
+                  <Picker
+                  selectedValue={this.state.Picker_currValue }
+                  style={{ width: 150, height: 44,}} itemStyle={{height: 44}}
+                  onValueChange={(itemValue, itemIndex) => this.pickerChange(itemIndex)}>{
+                    this.state.voices.map( (v)=>{
+                    return <Picker.Item label={v.name} value={v.id} />
+                    })
+                  }
+                  </Picker>
                   <Text
                     style={style.labelSlider}>
-                    {`Velocidad`}
+                    {`Voces`}
                   </Text>
+
               </View>
               <View style={{height: 30, backgroundColor: 'white'}}></View>
           <View style={{flexDirection: 'row', justifyContent: 'space-between',}}>
