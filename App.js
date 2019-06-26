@@ -271,7 +271,7 @@ export default class App extends Component<Props>
       // error reading value
       console.log("reading error: " + e)
     }
-  }
+  } 
 
   //#endregion
 
@@ -342,6 +342,8 @@ export default class App extends Component<Props>
                       * Se ha detectado un tag al iniciar la aplicacion
                       * Aca ocurre la lectura en Android
                       */
+                     this.setState({isAfterTagRead: true});
+                      
                       this.setState({ NFC_tag });
                       let text = this._parseText(NFC_tag);
                       this.setState({NFC_parsedText: text});
