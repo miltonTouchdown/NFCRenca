@@ -778,66 +778,7 @@ export default class App extends Component<Props>
             </Fragment>
           </Overlay>
         </View>
-      </SafeAreaView>
-      /*
-      <View style={styles.container}>
-        <Text style={styles.title}>{`NFC Renca`}</Text>
-
-        <Button title={`start nfc`} onPress={this._startDetection} />
-        <Button title={`Read text`} onPress={this.readText} />
-
-        <Text style={styles.label}>{`Status: ${this.state.ttsStatus ||
-          ""}`}</Text>
-
-        <Text style={styles.label}>{`Selected Voice: ${this.state
-          .selectedVoice || ""}`}</Text>
-
-        <View style={styles.sliderContainer}>
-          <Text
-            style={styles.sliderLabel}
-          >{`Speed: ${this.state.speechRate.toFixed(2)}`}</Text>
-          <Slider
-            style={styles.slider}
-            minimumValue={0.01}
-            maximumValue={0.99}
-            value={this.state.speechRate}
-            onSlidingComplete={this.setSpeechRate}
-          />
-        </View>       
-
-        <View style={styles.sliderContainer}>
-          <Text
-            style={styles.sliderLabel}
-          >{`Pitch: ${this.state.speechPitch.toFixed(2)}`}</Text>
-          <Slider
-            style={styles.slider}
-            minimumValue={0.5}
-            maximumValue={2}
-            value={this.state.speechPitch}
-            onSlidingComplete={this.setSpeechPitch}
-          />
-        </View>
-
-        <Button title={`Write text`} onPress={this._requestNdefWrite} />
-        
-          <TextInput
-            style={styles.textInput}
-            multiline={true}
-            onChangeText={text => this.setState({ text })}
-            value={this.state.text}
-            onSubmitEditing={Keyboard.dismiss}
-          />
-          
-        <View style={styles.textInput}>
-        <FlatList
-          keyExtractor={item => item.id}
-          renderItem={this.renderVoiceItem}
-          extraData={this.state.selectedVoice}
-          data={this.state.voices}
-        />
-        </View>
-      </View>
-      */
+      </SafeAreaView>   
     );
   }
   //#endregion
