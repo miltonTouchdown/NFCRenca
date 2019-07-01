@@ -5,9 +5,9 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>RencaTeGuia</string>
+	<string>Guía Informativa</string>
 	<key>CFBundleExecutable</key>
-	<string>RencaTeGuia</string>
+	<string>Guía Informativa</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.MiltonPulgar.NFCRenca</string>
 	<key>CFBundleInfoDictionaryVersion</key>
