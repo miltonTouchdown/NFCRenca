@@ -7,11 +7,7 @@ import {
   Image,
   TouchableOpacity,
   Alert,
-  FlatList,
   Picker,
-  //Slider,
-  //Keyboard,
-  //TextInput,
   Dimensions,
   NativeModules
 } from 'react-native';
@@ -43,9 +39,10 @@ export default class App extends Component<Props>
     voices: [],
     ttsStatus: "initiliazing",
     selectedVoice: null,
-    speechRate: 0.5,
+    speechRate: 0.5, 
     speechPitch: 1,
     text: "Renca te guía",
+    textConfig: "Te deseo un buen día",
     NFC_supported: true,
     NFC_enabled: false,
     NFC_isWriting: false,
@@ -330,6 +327,7 @@ export default class App extends Component<Props>
           .catch(error => {
               console.warn('start fail', error);
               this.setState({NFC_supported: false});
+              this.ShowAlertNFCSupport()
           })
 
       if (Platform.OS === 'android') {
@@ -361,6 +359,9 @@ export default class App extends Component<Props>
           NfcManager.isEnabled()
               .then(NFC_enabled => {
                   this.setState({ NFC_enabled });
+                  if(!NFC_enabled){
+                    this.ShowAlertNFCSupport();
+                  }
               })
               .catch(err => {
                   console.log(err);
@@ -370,7 +371,8 @@ export default class App extends Component<Props>
                   if (event.state === 'on') {
                       this.setState({NFC_enabled: true});
                   } else if (event.state === 'off') {
-                      this.setState({enabled: false});
+                      this.setState({NFC_enabled: false});
+                      this.ShowAlertNFCSupport()
                   } else if (event.state === 'turning_on') {
                       // do whatever you want
                   } else if (event.state === 'turning_off') {
@@ -495,8 +497,6 @@ export default class App extends Component<Props>
     {
       this._startDetection();
     }
-
-    // TODO Mostrar alerta si el dispositivo no soporta nfc o lo tiene desactivado
   }
 
   _readNFCTagText = async() => 
@@ -522,6 +522,8 @@ export default class App extends Component<Props>
     if(this.state.currCountTap === this.state.countTap)
     {
       // Abrir configuraciones
+      Tts.stop(); 
+
       clearTimeout(this.state.timeoutID);
 
       this.setState({ isConfigVisible: true, timeoutID: null });
@@ -536,6 +538,9 @@ export default class App extends Component<Props>
   OnCloseWindowConfig = (isSave) =>
   {
     // close window
+
+    Tts.stop(); 
+
     this.setState({ isConfigVisible: false, currCountTap: 0  });
 
     // Guardar valores
@@ -546,7 +551,33 @@ export default class App extends Component<Props>
       this.setVoice(this.state.currVoicePicker);
 
       this.storeData();
+    }else{
+      this.setSpeechPitch(this.state.speechPitch);
+      this.setSpeechRate(this.state.speechRate);
+      this.setVoice(this.state.selectedVoice);
     }
+  }
+
+  ShowAlertNFCSupport()
+  {
+    let message = '';
+
+    if(!this.state.NFC_supported)
+    {
+      message = 'Este dispositivo no soporta NFC por lo que la aplicación no funcionará';
+    }else if(!this.state.NFC_enabled)
+    {
+      message = 'Debes activar el NFC en el dispositivo';
+    }
+
+    Alert.alert(
+      'Alerta',
+      message,
+      [
+        {text: 'OK', onPress: () => console.log('OK Pressed')},
+      ],
+      {cancelable: false},
+    );
   }
 
   pickerChange(index){
@@ -603,20 +634,6 @@ export default class App extends Component<Props>
                     }
                     type="clean"
                     onPress ={this.readText}
-                    // onPress={()=> Alert.alert(
-                    //   'Alert Title',
-                    //   'My Alert Msg',
-                    //   [
-                    //     {text: 'Ask me later', onPress: () => console.log('Ask me later pressed')},
-                    //     {
-                    //       text: 'Cancel',
-                    //       onPress: () => console.log('Cancel Pressed'),
-                    //       style: 'cancel',
-                    //     },
-                    //     {text: 'OK', onPress: () => console.log('OK Pressed')},
-                    //   ],
-                    //   {cancelable: false},
-                    // )} 
                   />
                 </View>
               </View>         
@@ -628,7 +645,7 @@ export default class App extends Component<Props>
                 android: 
                   <View style={style.contentImage}>
                       <Image
-                      style={{width: 400 , height: 400}}
+                      style={{width: 400 , height: 400, opacity: .5}}
                       source={require('./resources/images/circle.png')}
                       />
                       <View style={{position: 'absolute', height: 200, width: 200, justifyContent: 'center', alignItems: 'center'}}>
@@ -732,9 +749,26 @@ export default class App extends Component<Props>
                     style={style.labelSlider}>
                     {`Voces`}
                   </Text>
-
+                 
               </View>
-              <View style={{height: 30, backgroundColor: 'white'}}></View>
+              <View style={{ backgroundColor: 'white', height: 30}}></View>
+              {
+              /*<View style={{ backgroundColor: 'white', flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 20, marginTop: 20}}>
+                <TouchableOpacity
+                onPress={() => 
+                  {
+                    Tts.stop(); 
+                    Tts.speak(this.state.textConfig);
+                  }}
+                >
+                  <IconMaterial
+                        name="volume-up"
+                        size={35}
+                        color="black"
+                  />
+                </TouchableOpacity>
+              </View>*/
+              }
           <View style={{flexDirection: 'row', justifyContent: 'space-between',}}>
                     <Button
                       ViewComponent={LinearGradient}
