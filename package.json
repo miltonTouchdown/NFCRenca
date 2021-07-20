@@ -9,7 +9,7 @@
   "dependencies": {
     "@react-native-community/async-storage": "^1.4.0",
     "react": "16.8.3",
-    "react-native": "0.59.8",
+    "react-native": "0.62.3",
     "react-native-elements": "^1.1.0",
     "react-native-linear-gradient": "^2.5.4",
     "react-native-nfc-manager": "^1.2.2",
